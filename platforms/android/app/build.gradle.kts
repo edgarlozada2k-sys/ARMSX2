@@ -190,6 +190,9 @@ android {
                 cmake {
                     arguments += "-DANDROID=true"
                     arguments += "-DANDROID_STL=c++_static"
+                    // ExKinet: compilar sin Rust (sin cadenas de shaders .slangp de RetroArch).
+                    if (providers.gradleProperty("armsx2.disableLibrashader").orNull == "true")
+                        arguments += "-DARMSX2_DISABLE_LIBRASHADER=ON"
                     // Passed explicitly rather than relying on the environment leaking through to
                     // the CMake invocation, so a build is reproducible from the Gradle property
                     // alone. Absent = Discord compiles out.
@@ -235,6 +238,9 @@ android {
                 cmake {
                     arguments += "-DANDROID=true"
                     arguments += "-DANDROID_STL=c++_static"
+                    // ExKinet: compilar sin Rust (sin cadenas de shaders .slangp de RetroArch).
+                    if (providers.gradleProperty("armsx2.disableLibrashader").orNull == "true")
+                        arguments += "-DARMSX2_DISABLE_LIBRASHADER=ON"
                     // Passed explicitly rather than relying on the environment leaking through to
                     // the CMake invocation, so a build is reproducible from the Gradle property
                     // alone. Absent = Discord compiles out.
