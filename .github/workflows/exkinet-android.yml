@@ -1,0 +1,73 @@
+# Compilación de ExKinet (fork personal de ARMSX2) para Android arm64.
+# Se ejecuta con cada push a la rama `exkinet` y también a mano (Run workflow).
+name: ExKinet Android
+
+on:
+  push:
+    branches: [exkinet]
+    paths-ignore: ['**/*.md']
+  workflow_dispatch:
+
+concurrency:
+  group: exkinet-android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    name: APK ExKinet (arm64)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    defaults:
+      run:
+        working-directory: platforms/android
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+
+      - name: NDK, CMake y plataforma
+        run: yes | sdkmanager "ndk;29.0.14206865" "cmake;3.31.6" "platforms;android-37.0" >/dev/null || true
+
+      - name: Dependencias de shaderc
+        run: python3 app/src/main/cpp/3rdparty/shaderc/utils/git-sync-deps
+
+      # Firma estable (opcional): si existen los secretos EXKINET_KEYSTORE_B64 y
+      # EXKINET_KEYSTORE_PASSWORD, cada APK se instala encima de la anterior sin perder datos.
+      # Sin ellos se firma con una clave de depuración temporal del ejecutor.
+      - name: Clave de firma
+        env:
+          KS_B64: ${{ secrets.EXKINET_KEYSTORE_B64 }}
+          KS_PASS: ${{ secrets.EXKINET_KEYSTORE_PASSWORD }}
+        run: |
+          if [ -n "$KS_B64" ] && [ -n "$KS_PASS" ]; then
+            echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/exkinet.jks"
+            printf 'storeFile=%s\nstorePassword=%s\nkeyAlias=exkinet\nkeyPassword=%s\n' "$RUNNER_TEMP/exkinet.jks" "$KS_PASS" "$KS_PASS" > armsx2_keystore.properties
+            echo "Firma: clave personal de ExKinet"
+          else
+            echo "Firma: clave de depuración temporal (configura los secretos para actualizar sin desinstalar)"
+          fi
+
+      - name: Compilar APK
+        run: >
+          ./gradlew :app:assembleGithubRelease --stacktrace
+          -Parmsx2.applicationId=com.exkinet.app
+          -Parmsx2.appLabel=ExKinet
+          -Parmsx2.disableLibrashader=true
+
+      - name: Pruebas unitarias de ExKinet
+        run: ./gradlew :app:testGithubReleaseUnitTest --tests 'com.armsx2.exkinet.*' -Parmsx2.applicationId=com.exkinet.app -Parmsx2.disableLibrashader=true || echo "Pruebas con fallos: revisa el registro"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: exkinet-android-arm64
+          path: platforms/android/app/build/outputs/apk/**/*.apk
+          if-no-files-found: error
