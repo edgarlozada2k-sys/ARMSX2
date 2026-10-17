@@ -28,6 +28,8 @@ sealed interface AppRoute {
     // can be hosted.
     data object RemotePlay : AppRoute
     data object About : AppRoute
+    /** ExKinet: pantallas propias. [parent] es a dónde vuelve «Atrás». */
+    data class Exk(val screen: com.armsx2.exkinet.ExkScreen, val parent: AppRoute = Home) : AppRoute
 }
 
 enum class SettingsCategory {
@@ -63,6 +65,8 @@ object UiNavigator {
     fun home() = navigate(AppRoute.Home)
 
     fun back(): Boolean {
+        // ExKinet: una pantalla con cambios sin guardar (o una captura de tecla) decide primero.
+        if (com.armsx2.exkinet.ui.ExkBack.intercept()) return true
         if (drawerOpen.value) {
             drawerOpen.value = false
             return true
@@ -77,6 +81,10 @@ object UiNavigator {
                 return true
             }
             AppRoute.Home -> Unit
+            is AppRoute.Exk -> {
+                route.value = current.parent
+                return true
+            }
             is AppRoute.BiosManager -> {
                 route.value = if (current.returnToArcade) AppRoute.Arcade else AppRoute.Home
                 return true

@@ -3271,6 +3271,8 @@ open class MainActivityRuntime : ComponentActivity() {
                 ),
             )
         }
+        // ExKinet: captura de teclas y «Probar controles» (ver exkinet/input/ExkInput.kt).
+        if (com.armsx2.exkinet.input.ExkInput.interceptKey(event)) return true
         val kc = event.keyCode
         if (kc != KeyEvent.KEYCODE_UNKNOWN) {
             when (event.action) {
@@ -3929,7 +3931,9 @@ open class MainActivityRuntime : ComponentActivity() {
 
         // Local co-op routing and macro precedence exactly match the old Compose
         // onKeyEvent path; only the dispatch layer has changed.
-        val port = com.armsx2.input.PadRouter.portForDevice(event.deviceId)
+        val port = if (com.armsx2.exkinet.input.ExkInput.isKeyboardEvent(event))
+            com.armsx2.exkinet.input.ExkInput.keyboardPlayer()
+        else com.armsx2.input.PadRouter.portForDevice(event.deviceId)
         val fromController = !isVolumeKey(physicalCode)
         com.armsx2.ui.touch.TouchControls.macroForPhysicalCode(physicalCode)?.let { macro ->
             com.armsx2.ui.touch.TouchControls.fireMacro(
@@ -3947,7 +3951,10 @@ open class MainActivityRuntime : ComponentActivity() {
             return true
         }
 
-        val target = ControllerMappings.targetForPhysical(physicalCode, port) ?: return false
+        // ExKinet: un teclado físico usa su propia tabla (kb.map.*) y su propio jugador.
+        val fromKeyboard = com.armsx2.exkinet.input.ExkInput.isKeyboardEvent(event)
+        val target = (if (fromKeyboard) com.armsx2.exkinet.input.ExkInput.keyboardTargetFor(physicalCode)
+            else ControllerMappings.targetForPhysical(physicalCode, port)) ?: return false
         // Pads that report a trigger BOTH ways (Odin 2 Portal and friends) synthesise a
         // KEYCODE_BUTTON_L2/R2 key event partway through the pull. In analog-pressure mode that
         // key would write a FULL press over the axis path's proportional value, snapping a
@@ -4514,6 +4521,8 @@ open class MainActivityRuntime : ComponentActivity() {
 
     override fun dispatchGenericMotionEvent(ev: MotionEvent): Boolean {
         if (com.armsx2.ui.home.LibraryScreensaver.onMotion(ev)) return true
+        // ExKinet: captura de ejes y prueba de sticks.
+        if (com.armsx2.exkinet.input.ExkInput.interceptMotion(ev)) return true
         // Controller-input diagnostic (ARMSX2_JOYCON): logged before ANY gate so it
         // captures the raw axes even mid-(re)bind and for SOURCE_DPAD-only events the
         // gameplay path would drop. Pure logging — no behaviour change.
@@ -5902,11 +5911,32 @@ open class MainActivityRuntime : ComponentActivity() {
         override fun onInputDeviceAdded(deviceId: Int) {}
         override fun onInputDeviceChanged(deviceId: Int) {}
         override fun onInputDeviceRemoved(deviceId: Int) {
+            // ExKinet: liberar botones y ejes del puerto antes de olvidar el dispositivo, para que
+            // ninguna dirección quede atascada al desconectar el mando.
+            val port = com.armsx2.input.PadRouter.claimedPortOf(deviceId)
+            synchronized(padHeldKeys) { padHeldKeys.removeAll { (it ushr 32).toInt() == deviceId } }
+            if (port != null) {
+                if (port in analogKeyHeld.indices) analogKeyHeld[port].clear()
+                com.armsx2.exkinet.input.ExkInput.releasePort(port)
+            }
             com.armsx2.input.PadRouter.forgetDevice(deviceId)
         }
     }
 
+    /** ExKinet: suelta toda la entrada del pad (ningún botón queda pulsado al cambiar de ventana). */
+    private fun exkReleaseAllInput() {
+        padHeldKeys.clear()
+        analogKeyHeld.forEach { it.clear() }
+        com.armsx2.exkinet.input.ExkInput.releaseAll()
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (!hasFocus) exkReleaseAllInput()
+    }
+
     override fun onPause() {
+        exkReleaseAllInput()
         // Take the second-display panel down with the app. A Presentation is not torn down by the
         // activity stopping, so it otherwise stayed on the external screen while the user was off
         // doing something else (reported).

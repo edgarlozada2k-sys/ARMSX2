@@ -1,0 +1,23 @@
+Te adjunto ExKinet_Entrega_Claude.zip. Quiero aplicar el diseño y el comportamiento de este prototipo a la aplicación Android cuyo código ya tienes.
+
+Primero abre LEEME.md, ESPECIFICACION.md y prototipo/index.html. Toma el ZIP como referencia principal; el enlace web es complementario.
+
+Trabaja sobre el proyecto existente. Conserva el motor de emulación, los juegos, las partidas, los ajustes, la compatibilidad y los datos del usuario. Crea una rama o punto de recuperación antes de modificarlo. No cambies el identificador del paquete ni la firma de actualización sin justificarlo y consultármelo.
+
+La marca será ExKinet y el logo será la X azul de logo-exkinet.svg. Reproduce el diseño aprobado: navegación superior, nombre y descripción del juego a la izquierda, botón Jugar azul, accesos a Ajustes HD y Texturas y carátulas inferiores.
+
+Cuida especialmente lo que ya corregimos:
+1. El fondo ocupa toda la pantalla y se funde suavemente con negro detrás del título, sin cortes verticales u horizontales visibles.
+2. Usa portada y fondo independientes. No amplíes automáticamente una carátula con texto para convertirla en fondo.
+3. Conserva los elementos de las tarjetas al seleccionar: la anterior baja y la nueva sube ligeramente y se asienta. Bordes azules luminosos, sin saltos ni recortes del brillo. El carrusel se desplaza suavemente cuando es necesario.
+4. Los fondos se precargan y cambian mediante un fundido. Si selecciono rápido varios juegos, solo debe terminar apareciendo el último elegido.
+5. Mostrar primero una imagen y después, si hay un vídeo asignado, reproducirlo en bucle y sin sonido con un fundido. Cancelar temporizadores y detener vídeos anteriores al cambiar de juego o salir de Inicio. Si no hay vídeo o falla, mantener la imagen.
+6. Ajustes abre una pantalla completa independiente con categorías. Conecta sus opciones con funciones reales y distingue cualquier opción pendiente.
+7. En Android, persiste correctamente los permisos y referencias de los archivos, incluyendo fondos y vídeos. No copies la limitación temporal de vídeos del navegador a la versión final.
+8. Respeta la opción de reducir animaciones y pausa tareas visuales al abrir un juego o mandar la app al fondo.
+
+Adapta la implementación al sistema de interfaz que ya use el proyecto. Si es Kotlin/Compose o Java, reconstruye el diseño allí; si usa WebView, conecta la vista con la capa Android. Evita reescribir el motor para cambiar la apariencia.
+
+Empieza inspeccionando el proyecto y eligiendo la estrategia. Después implementa, compila y verifica. No te quedes solo en un plan o capturas. Entrega el código actualizado, la APK cuando puedas compilarla y un resumen de las pruebas. Distingue pruebas reales, simulaciones y puntos pendientes; no afirmes que funciona en Android si no lo has comprobado.
+
+Dispositivo objetivo: Lenovo Yoga Tab 13, Snapdragon 870, Adreno 650 y 8 GB de RAM, horizontal, táctil y mando. Rogue Galaxy es uno de mis juegos prioritarios.

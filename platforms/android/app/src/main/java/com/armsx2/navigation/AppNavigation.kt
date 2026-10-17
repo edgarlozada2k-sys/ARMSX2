@@ -37,6 +37,8 @@ import com.armsx2.ui.settingshub.SettingsScreen
 fun AppNavigation() {
     val route = UiNavigator.route.value
     val drawerOpen = UiNavigator.drawerOpen.value
+    // ExKinet: datos propios (fichas, fondos, preferencias) listos antes de decidir la interfaz.
+    com.armsx2.exkinet.data.ExkStore.init(androidx.compose.ui.platform.LocalContext.current.applicationContext)
 
     BackHandler(enabled = true) { UiNavigator.back() }
 
@@ -83,10 +85,11 @@ fun AppNavigation() {
             label = "app-route",
         ) { destination ->
             when (destination) {
-                AppRoute.Home -> HomeScreen(
+                AppRoute.Home -> if (com.armsx2.exkinet.ExkUi.classicEnabled()) HomeScreen(
                     onOpenMenu = { UiNavigator.drawerOpen.value = true },
                     onOpenGameSettings = { UiNavigator.navigate(AppRoute.Settings(game = it)) },
-                )
+                ) else com.armsx2.exkinet.ExkHomeRoot()
+                is AppRoute.Exk -> com.armsx2.exkinet.ExkScreenRoot(destination.screen)
                 is AppRoute.Settings -> SettingsScreen(
                     initialCategory = destination.category,
                     game = destination.game,

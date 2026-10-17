@@ -1282,6 +1282,46 @@ object TouchControls {
      *  key to clear, and MainActivityRuntime.currentGame may still point at the last-played
      *  game — so resolving a serial there would wrongly delete that game's
      *  custom layout. */
+    // ---- ExKinet: editor de distribución fuera del juego -------------------------------
+    private fun exkKey(serial: String, portrait: Boolean) =
+        KEY_LAYOUT_GAME_PREFIX + serial + if (portrait) ".portrait" else ""
+
+    fun exkHasGameLayout(serial: String?): Boolean = !serial.isNullOrEmpty() &&
+        (MainActivityRuntime.prefs.contains(exkKey(serial, false)) || MainActivityRuntime.prefs.contains(exkKey(serial, true)))
+
+    /** Distribución efectiva para [serial] (null = general) en la orientación pedida. */
+    fun exkLayoutFor(serial: String?, portrait: Boolean): TouchLayout {
+        ensureLoaded()
+        if (!serial.isNullOrEmpty()) {
+            MainActivityRuntime.prefs.getString(exkKey(serial, portrait), null)?.let { raw ->
+                runCatching { TouchLayout.fromJson(JSONObject(raw)) }.getOrNull()?.let { return it }
+            }
+        }
+        val prof = profiles.firstOrNull { it.name == activeProfileName.value } ?: profiles.firstOrNull()
+        return prof?.layoutFor(portrait)?.copy() ?: TouchLayout.defaultFor(portrait)
+    }
+
+    fun exkSaveLayout(serial: String?, portrait: Boolean, layout: TouchLayout) {
+        ensureLoaded()
+        if (!serial.isNullOrEmpty()) {
+            MainActivityRuntime.prefs.edit { putString(exkKey(serial, portrait), layout.toJson().toString()) }
+        } else {
+            val idx = profiles.indexOfFirst { it.name == activeProfileName.value }.takeIf { it >= 0 } ?: 0
+            if (profiles.isNotEmpty()) {
+                profiles[idx] = profiles[idx].withLayoutFor(portrait, layout.copy())
+                persist()
+            }
+        }
+        if (!gameIsRunning() && portrait == this.portrait.value) activeLayout.value = layout.copy()
+    }
+
+    /** Vuelve a leer perfiles y ajustes tras restaurar preferencias (Cancelar en ExKinet). */
+    fun exkReload() {
+        loaded = false
+        ensureLoaded()
+        if (!gameIsRunning()) applyActiveProfileForOrientation()
+    }
+
     fun clearGameLayoutIfRunning() {
         if (gameIsRunning()) clearGameLayout(runningSerial())
     }

@@ -304,6 +304,22 @@ object ControllerMappings {
 			// Keep the cache consistent with whichever tier was just written.
 			cachedFor = runtimeSerial()
 		}
+		/** ExKinet: valor en el nivel indicado (null = general), sin depender del juego en marcha. */
+		fun scoped(left: Boolean, serial: String?): Float {
+			val p = MainActivityRuntime.prefs
+			return (when {
+				serial != null && p.contains(gameKey(serial, key(left))) -> p.getFloat(gameKey(serial, key(left)), def)
+				p.contains(key(left)) -> p.getFloat(key(left), def)
+				else -> p.getFloat(baseKey, def)
+			}).coerceIn(lo, hi)
+		}
+		fun setScoped(left: Boolean, v: Float, serial: String?) {
+			MainActivityRuntime.prefs.edit {
+				putFloat(if (serial != null) gameKey(serial, key(left)) else key(left), v.coerceIn(lo, hi))
+			}
+			drop()
+		}
+		fun drop() { cacheL = Float.NaN; cacheR = Float.NaN; cachedFor = "\u0000unset" }
 		fun reset(edit: android.content.SharedPreferences.Editor) {
 			edit.remove(baseKey).remove(key(true)).remove(key(false))
 			runtimeSerial()?.let { edit.remove(gameKey(it, key(true))).remove(gameKey(it, key(false))) }
@@ -339,6 +355,13 @@ object ControllerMappings {
     const val STICK_DZ_MAX = 0.40f
     private val prefStickDz = PerStickPref(KEY_STICK_DZ, 0.05f, 0f, STICK_DZ_MAX)
     fun stickDeadzone(left: Boolean): Float = prefStickDz.get(left)
+    // ExKinet: zona muerta por ámbito explícito (general / juego) para la pantalla de Controles.
+    fun stickDeadzoneScope(left: Boolean, serial: String?): Float = prefStickDz.scoped(left, serial)
+    fun setStickDeadzoneScope(left: Boolean, v: Float, serial: String?) = prefStickDz.setScoped(left, v, serial)
+    fun exkDropTuningCaches() {
+        prefStickSens.drop(); prefStickAccel.drop(); prefStickCurve.drop()
+        prefStickDz.drop(); prefStickOuter.drop(); prefStickAntiDz.drop()
+    }
     fun setStickDeadzone(left: Boolean, v: Float) = prefStickDz.set(left, v)
 
     // Outer (anti-)deadzone: fraction of travel near the EDGE that maps to full

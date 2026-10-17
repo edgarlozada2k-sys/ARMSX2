@@ -116,6 +116,9 @@ val armsx2DiscordSdkDir: String? =
 
 android {
     namespace = "com.armsx2"
+    // ExKinet: el análisis lint de release necesita artefactos de escritorio de compose-icons que
+    // no están en Maven Central; no afecta a la APK.
+    lint { checkReleaseBuilds = false }
     compileSdk = 37
     ndkVersion = armsx2NdkVersion.get()
 

@@ -251,6 +251,9 @@ object PadRouter {
      *  top. Called on device removal: AYANEO handhelds power-cycle the built-in pad on sleep/wake and
      *  it comes back with a NEW deviceId — the stale id otherwise keeps owning Player 1's slot, and
      *  the woken pad claims slot 1 (an un-armed PS2 port 2), so gameplay input goes nowhere (#394). */
+    /** ExKinet: puerto que tiene reclamado [deviceId], o null (no reclama ninguno). */
+    fun claimedPortOf(deviceId: Int): Int? = slots.indexOf(deviceId).takeIf { it >= 0 }
+
     fun forgetDevice(deviceId: Int) {
         if (deviceId < 0) return
         for (i in slots.indices) if (slots[i] == deviceId) slots[i] = -1

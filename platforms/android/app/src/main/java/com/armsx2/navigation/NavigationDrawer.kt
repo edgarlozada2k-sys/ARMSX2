@@ -194,6 +194,12 @@ private fun DrawerContent(selected: AppRoute, onNavigate: (AppRoute) -> Unit, on
     // (the old box-drawing characters like ▦ ◉ ⌁ ✦ were unclear per tester feedback).
     val primary = listOf(
         DrawerItem("games.section.library", "🎮", AppRoute.Home),
+        // ExKinet: volver a la interfaz ExKinet (o abrir sus ajustes) desde el menú de ARMSX2.
+        DrawerItem("Interfaz ExKinet", "✕", onAction = {
+            com.armsx2.exkinet.data.ExkStore.setPrefs { it.copy(classicUi = false) }
+            UiNavigator.navigate(AppRoute.Home)
+            onDismiss()
+        }),
         // Boot straight into the PS2 system BIOS with no disc — distinct from "BIOS Location"
         // below, which only points the emulator at your BIOS file.
         DrawerItem("bios.boot.title", "▶️", onAction = { MainActivityRuntime.startBios(); onDismiss() }),
@@ -380,4 +386,5 @@ private fun sameDestination(current: AppRoute, target: AppRoute): Boolean = when
     AppRoute.Friends -> current is AppRoute.Friends
     AppRoute.RemotePlay -> current is AppRoute.RemotePlay
     AppRoute.About -> current is AppRoute.About
+    is AppRoute.Exk -> current is AppRoute.Exk
 }
