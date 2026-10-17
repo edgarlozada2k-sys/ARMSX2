@@ -64,7 +64,9 @@ jobs:
           -Parmsx2.disableLibrashader=true
 
       - name: Pruebas unitarias de ExKinet
-        run: ./gradlew :app:testGithubReleaseUnitTest --tests 'com.armsx2.exkinet.*' -Parmsx2.applicationId=com.exkinet.app -Parmsx2.disableLibrashader=true || echo "Pruebas con fallos: revisa el registro"
+        continue-on-error: true
+        run: |
+          ./gradlew :app:testGithubReleaseUnitTest --tests 'com.armsx2.exkinet.*' -Parmsx2.applicationId=com.exkinet.app -Parmsx2.disableLibrashader=true
 
       - uses: actions/upload-artifact@v4
         with:
