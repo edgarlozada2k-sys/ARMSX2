@@ -12,7 +12,18 @@ ExKinet es una **versión personal de ARMSX2** (emulador de PS2 para ARM64, GPL-
 
 ## 1. Estado en una línea
 
-**El código compila** (Kotlin y el motor C++ completo, en local). **La APK todavía no se ha probado en un Android real**: ninguna afirmación de este documento sobre «funciona en la tablet» está comprobada. Ver §5.
+**El código compila y genera la APK** (motor C++ completo + Kotlin, en local; `com.exkinet.app`, versión `0.1.0-exkinet`, arm64, ≈54 MB). Las 4 pruebas unitarias de ExKinet pasan. **La APK todavía no se ha probado en un Android real**: ninguna afirmación de este documento sobre «funciona en la tablet» está comprobada. Ver §5.
+
+### Qué se ha comprobado y cómo
+| Comprobación | Resultado | Tipo |
+|---|---|---|
+| Compilación del motor C++ (NDK 29, CMake 3.31.6, sin librashader) | OK | real (Linux x86_64) |
+| Compilación Kotlin con ExKinet integrado | 0 errores | real |
+| Regla de ARMSX2 «sin diálogos de ventana» (`checkNoWindowModals`) | OK tras usar `PadModal` | real |
+| APK `assembleGithubRelease`: paquete `com.exkinet.app`, etiqueta ExKinet, `arm64-v8a`, `libemucore_4k.so`, firma v2 | OK (`aapt2 dump badging`, `apksigner verify`) | real |
+| Pruebas unitarias `com.armsx2.exkinet.ExkLogicTest` (claves de controles, encuadre, botones ↔ acciones reales, conflictos) | 4/4 OK | real (JVM) |
+| Instalar y ejecutar en Android / Yoga Tab 13 | **no realizado** | — |
+| Interfaz, animaciones, vídeo, mando, teclado y táctil en pantalla | **no realizado** (sin dispositivo ni emulador: el entorno no tiene KVM) | — |
 
 ---
 
@@ -119,8 +130,10 @@ Nada se ha ejecutado en la Yoga Tab 13 ni en un emulador Android. Hay que compro
 - El arte de ejemplo del prototipo (carátulas y fondo, de juegos comerciales) **no** está en el repositorio, que es público. Cada usuario pone sus imágenes en «Editar ficha».
 
 ### Errores actuales
-- Compilación local de Kotlin: **0 errores** en el último commit.
-- La primera ejecución de GitHub Actions falló por un error de YAML (ya corregido).
+- Compilación local: **0 errores**; APK generada.
+- GitHub Actions: la primera ejecución falló por un error de YAML (corregido). Las siguientes se pueden seguir en el enlace de §6.
+- Pulido pendiente del tema claro: varios campos (búsqueda, editor) usan colores oscuros fijos.
+- Aviso de «archivo no disponible o incompatible» en la biblioteca: no implementado (ARMSX2 simplemente omite lo que no encuentra al escanear).
 
 ---
 

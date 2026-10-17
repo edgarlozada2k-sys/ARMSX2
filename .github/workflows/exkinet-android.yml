@@ -61,12 +61,13 @@ jobs:
           ./gradlew :app:assembleGithubRelease --stacktrace
           -Parmsx2.applicationId=com.exkinet.app
           -Parmsx2.appLabel=ExKinet
+          -Parmsx2.versionName=0.1.0-exkinet
           -Parmsx2.disableLibrashader=true
 
       - name: Pruebas unitarias de ExKinet
         continue-on-error: true
         run: |
-          ./gradlew :app:testGithubReleaseUnitTest --tests 'com.armsx2.exkinet.*' -Parmsx2.applicationId=com.exkinet.app -Parmsx2.disableLibrashader=true
+          ./gradlew :app:testGithubDebugUnitTest --tests 'com.armsx2.exkinet.*' -Parmsx2.applicationId=com.exkinet.app -Parmsx2.disableLibrashader=true
 
       - uses: actions/upload-artifact@v4
         with:

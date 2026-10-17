@@ -248,10 +248,26 @@ object ExkInput {
         val isPad = ev.isFromSource(InputDevice.SOURCE_JOYSTICK) || ev.isFromSource(InputDevice.SOURCE_GAMEPAD)
         if (!isPad || ev.action != MotionEvent.ACTION_MOVE) return false
         if (captureCallback != null) {
+            val name = ev.device?.name ?: ""
+            // Muchos mandos envían la cruceta (HAT) y los gatillos como ejes, no como teclas:
+            // se traducen a la tecla equivalente, que es como ARMSX2 los asigna.
+            val hx = ev.getAxisValue(MotionEvent.AXIS_HAT_X); val hy = ev.getAxisValue(MotionEvent.AXIS_HAT_Y)
+            val lt = maxOf(ev.getAxisValue(MotionEvent.AXIS_LTRIGGER), ev.getAxisValue(MotionEvent.AXIS_BRAKE))
+            val rt = maxOf(ev.getAxisValue(MotionEvent.AXIS_RTRIGGER), ev.getAxisValue(MotionEvent.AXIS_GAS))
+            val asKey = when {
+                hy < -0.5f -> KeyEvent.KEYCODE_DPAD_UP
+                hy > 0.5f -> KeyEvent.KEYCODE_DPAD_DOWN
+                hx < -0.5f -> KeyEvent.KEYCODE_DPAD_LEFT
+                hx > 0.5f -> KeyEvent.KEYCODE_DPAD_RIGHT
+                lt > 0.6f -> KeyEvent.KEYCODE_BUTTON_L2
+                rt > 0.6f -> KeyEvent.KEYCODE_BUTTON_R2
+                else -> null
+            }
+            if (asKey != null && captureKind != CaptureKind.KEYBOARD) {
+                finishCapture(Captured.Key(asKey, false, name)); return true
+            }
             if (captureKind == CaptureKind.CONTROLLER_ANY) {
-                stickDirection(ev)?.let { (left, dir) ->
-                    finishCapture(Captured.Axis(left, dir, ev.device?.name ?: ""))
-                }
+                stickDirection(ev)?.let { (left, dir) -> finishCapture(Captured.Axis(left, dir, name)) }
             }
             return true
         }
